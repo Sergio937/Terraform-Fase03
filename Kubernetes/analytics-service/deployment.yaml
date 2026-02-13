@@ -15,11 +15,9 @@ spec:
       labels:
         app: analytics-service
     spec:
-      imagePullSecrets:
-        - name: ocir-secret
       containers:
         - name: analytics-service
-          image: gru.ocir.io/<namespace>/<project-name>/analytics-service:latest
+          image: ${ECR_ANALYTICS_IMAGE}
           imagePullPolicy: Always
           resources:
             requests:

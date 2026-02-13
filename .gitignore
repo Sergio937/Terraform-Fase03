@@ -3,7 +3,7 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
-!terraform/envs/*.tfvars
+!**/*.tfvars.example
 *.tfplan
 .terraform.lock.hcl
 crash.log
@@ -33,3 +33,4 @@ Thumbs.db
 *.log
 plan.txt
 outputs.json
+infrastructure-outputs.txt

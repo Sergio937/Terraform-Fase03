@@ -24,7 +24,7 @@ GitOps é uma metodologia onde o **Git é a única fonte da verdade** para infra
                             │                      │ sync
                             │                      ▼
                      ┌──────▼──────────┐    ┌─────────────┐
-                     │  GitHub Actions │    │ OKE Cluster │
+                     │  GitHub Actions │    │ EKS Cluster │
                      │   (CI Pipeline) │    │             │
                      └─────────────────┘    └─────────────┘
                             │
@@ -39,10 +39,10 @@ GitOps é uma metodologia onde o **Git é a única fonte da verdade** para infra
 ### Fluxo Detalhado
 
 1. **Developer faz push** → código fonte no GitHub
-2. **GitHub Actions (CI)** → Build, Test, Security Scan, Push image para OCIR
+2. **GitHub Actions (CI)** → Build, Test, Security Scan, Push image para ECR
 3. **CI atualiza GitOps** → Commit com nova tag de imagem nos manifests em `gitops/`
 4. **ArgoCD detecta mudança** → Monitora repositório Git
-5. **ArgoCD sincroniza** → Aplica mudanças no cluster OKE automaticamente
+5. **ArgoCD sincroniza** → Aplica mudanças no cluster EKS automaticamente
 6. **Deploy concluído** → Nova versão rodando no cluster
 
 ## 🚀 Setup Rápido
@@ -244,7 +244,7 @@ argocd account list
 
 **Opções:**
 1. **Sealed Secrets**: Encripta secrets para versionar no Git
-2. **External Secrets**: Integra com vault externo (OCI Vault)
+2. **External Secrets**: Integra com vault externo (AWS Secrets Manager)
 3. **Git-crypt**: Encripta arquivos no Git
 
 ## 📊 Monitoramento
@@ -391,7 +391,7 @@ metadata:
 - [ ] CI/CD atualiza manifestos GitOps (workflows configurados)
 - [ ] Secrets do GitHub configurados
 - [ ] Namespace `togglemaster` criado
-- [ ] Image pull secret `ocir-secret` criado
+- [ ] Image pull secret `ecr-secret` criado (se necessario)
 - [ ] ArgoCD UI acessível
 - [ ] Todas as 5 apps aparecem no ArgoCD
 - [ ] Apps estão Synced & Healthy

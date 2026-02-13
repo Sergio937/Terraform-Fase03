@@ -15,11 +15,9 @@ spec:
       labels:
         app: targeting-service
     spec:
-      imagePullSecrets:
-        - name: ocir-secret
       containers:
         - name: targeting-service
-          image: gru.ocir.io/<namespace>/<project-name>/targeting-service:latest
+          image: ${ECR_TARGETING_IMAGE}
           imagePullPolicy: Always
           resources:
             requests:

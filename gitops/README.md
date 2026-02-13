@@ -27,10 +27,10 @@ gitops/
 
 ## Fluxo GitOps
 
-1. **CI Pipeline** (GitHub Actions) → Build, Test, Security Scan → Push image para OCIR
+1. **CI Pipeline** (GitHub Actions) → Build, Test, Security Scan → Push image para ECR
 2. **CI atualiza tag** → Abre PR/commit no repositório GitOps com nova imagem
 3. **ArgoCD monitora** → Detecta mudança no repositório GitOps
-4. **ArgoCD sincroniza** → Aplica as mudanças no cluster OKE automaticamente
+4. **ArgoCD sincroniza** → Aplica as mudanças no cluster EKS automaticamente
 
 ## Vantagens
 

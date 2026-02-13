@@ -17,7 +17,7 @@ fi
 # Verificar conexão com cluster
 if ! kubectl cluster-info &> /dev/null; then
     echo "❌ Não foi possível conectar ao cluster Kubernetes."
-    echo "Configure o kubectl com: oci ce cluster create-kubeconfig --cluster-id <id>"
+    echo "Configure o kubectl com: aws eks update-kubeconfig --name <cluster-name> --region <region>"
     exit 1
 fi
 

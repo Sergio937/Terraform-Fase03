@@ -54,16 +54,21 @@ tf-output: ## Mostra os outputs do Terraform
 ## ==== Kubernetes ====
 
 config-k8s: ## Configura kubectl para o cluster OKE
-	@echo "Execute: oci ce cluster create-kubeconfig --cluster-id <cluster-id>"
+config-k8s: ## Configura kubectl para o cluster EKS
+	@echo "Execute: aws eks update-kubeconfig --name <cluster-name> --region <region>"
 
 create-namespace: ## Cria o namespace togglemaster
 	kubectl apply -f $(K8S_DIR)/namespace/namespace.yaml
 
 create-secret: ## Cria o image pull secret interativamente
-	@bash $(K8S_DIR)/create-ocir-secret.sh
+	@bash $(K8S_DIR)/create-ecr-secret.sh
 
 configure-deployments: ## Configura as imagens nos deployments
-	@bash $(K8S_DIR)/configure-ocir.sh
+	@bash $(K8S_DIR)/configure-ecr.sh
+
+configure-endpoints: ## Preenche endpoints OCI nos manifests usando Terraform outputs
+configure-endpoints: ## Preenche endpoints AWS nos manifests usando Terraform outputs
+	@bash $(K8S_DIR)/configure-aws-endpoints.sh
 
 deploy-all: ## Deploy de todos os serviços
 	@echo "Aplicando ConfigMaps e Secrets..."

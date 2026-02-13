@@ -1,6 +1,6 @@
 # ArgoCD Installation Guide
 
-## Instalação do ArgoCD no cluster OKE
+## Instalacao do ArgoCD no cluster EKS
 
 ### Opção 1: Via kubectl (Recomendado)
 

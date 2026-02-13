@@ -1,10 +1,10 @@
-# Guia de Deploy dos Microsserviços no OKE
+# Guia de Deploy dos Microsservicos no EKS
 
 ## Pré-requisitos
 
-1. **Terraform aplicado** - O cluster OKE e os repositórios OCIR devem estar criados
-2. **kubectl configurado** - Conectado ao cluster OKE
-3. **Credenciais OCI** - Auth token gerado no OCI
+1. **Terraform aplicado** - O cluster EKS e os repositórios ECR devem estar criados
+2. **kubectl configurado** - Conectado ao cluster EKS
+3. **Credenciais AWS** - Access Key/Secret configurados (CLI)
 
 ## Passo 1: Criar o Namespace
 
@@ -12,44 +12,28 @@
 kubectl apply -f Kubernetes/namespace/namespace.yaml
 ```
 
-## Passo 2: Criar o Image Pull Secret para OCIR
+## Passo 2: Criar o Image Pull Secret para ECR (opcional)
 
-Antes de aplicar os deployments, crie o secret para autenticar no OCIR:
+Antes de aplicar os deployments, crie o secret para autenticar no ECR (se necessario):
 
 ```bash
 # Obtenha as informações necessárias:
-# - NAMESPACE: seu tenancy namespace (ex: grxyz123)
-# - USERNAME: seu usuário OCI (ex: oracleidentitycloudservice/seu.email@exemplo.com)
-# - AUTH_TOKEN: token gerado em OCI Console > User Settings > Auth Tokens
-# - PROJECT_NAME: nome do projeto usado no Terraform
+# - AWS_ACCOUNT_ID: ID da conta AWS
+# - AWS_REGION: regiao
 
-kubectl create secret docker-registry ocir-secret \
-  --docker-server=gru.ocir.io \
-  --docker-username='<NAMESPACE>/<USERNAME>' \
-  --docker-password='<AUTH_TOKEN>' \
-  --namespace=togglemaster
+aws ecr get-login-password --region <AWS_REGION> | \
+  kubectl create secret docker-registry ecr-secret \
+    --docker-server=<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com \
+    --docker-username=AWS \
+    --docker-password-stdin \
+    --namespace=togglemaster
 ```
 
-## Passo 3: Atualizar os Deployments com a URL correta do OCIR
+## Passo 3: Atualizar os Deployments com a URL correta do ECR
 
-Edite cada deployment (analytics, auth, evaluation, flag, targeting) e substitua:
-- `<namespace>` pelo namespace da sua tenancy OCI
-- `<project-name>` pelo valor da variável `project_name` do Terraform
-
-Exemplo:
-```yaml
-image: gru.ocir.io/grxyz123/togglemaster/analytics-service:latest
-```
-
-Você pode fazer isso com sed:
+Execute a automacao para preencher endpoints e imagens via outputs:
 ```bash
-NAMESPACE="seu-namespace"
-PROJECT="seu-projeto"
-
-for service in analytics-service auth-service evaluation-service flag-service targeting-service; do
-  sed -i "s|<namespace>|$NAMESPACE|g" Kubernetes/$service/deployment.yaml
-  sed -i "s|<project-name>|$PROJECT|g" Kubernetes/$service/deployment.yaml
-done
+make configure-endpoints
 ```
 
 ## Passo 4: Aplicar ConfigMaps e Secrets
@@ -114,7 +98,7 @@ kubectl apply -f Kubernetes/targeting-service/service.yaml
 ## Passo 6: Configurar Ingress
 
 ```bash
-# Instalar NGINX Ingress Controller (se ainda não estiver instalado)
+# Instalar NGINX Ingress Controller (se ainda nao estiver instalado)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
 
 # Aplicar o Ingress
@@ -139,7 +123,7 @@ kubectl logs -f deployment/analytics-service -n togglemaster
 
 ## Atualização de Imagens via CI/CD
 
-O GitHub Actions irá automaticamente fazer push de novas imagens para o OCIR quando houver push na branch `main`. Para atualizar o deployment:
+O GitHub Actions ira automaticamente fazer push de novas imagens para o ECR quando houver push na branch `main`. Para atualizar o deployment:
 
 ```bash
 # Opção 1: Restart do deployment para puxar a tag :latest
@@ -147,7 +131,7 @@ kubectl rollout restart deployment/analytics-service -n togglemaster
 
 # Opção 2: Atualizar com uma tag específica de commit
 kubectl set image deployment/analytics-service \
-  analytics-service=gru.ocir.io/<namespace>/<project>/analytics-service:a1b2c3d \
+  analytics-service=<account-id>.dkr.ecr.<region>.amazonaws.com/<project>/analytics-service:a1b2c3d \
   -n togglemaster
 
 # Ver o status do rollout
@@ -158,8 +142,8 @@ kubectl rollout status deployment/analytics-service -n togglemaster
 
 Para que o CI/CD funcione, configure estes secrets no GitHub:
 
-- `OCI_AUTH_TOKEN`: Auth token do OCI
-- `OCI_USERNAME`: `<tenancy-namespace>/<oci-username>`
-- `OCI_REGISTRY_URL`: `gru.ocir.io`
-- `OCI_NAMESPACE`: namespace da tenancy
-- `PROJECT_NAME`: nome do projeto (mesmo do Terraform)
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `AWS_ACCOUNT_ID`
+- `PROJECT_NAME`

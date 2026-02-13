@@ -13,14 +13,14 @@ Ele funciona da seguinte forma:
     * Salva o resultado no Redis com um TTL (Time-To-Live) curto.
 4.  Executa a lógica de avaliação (ex: "o usuário está nos 50%?").
 5.  Retorna `true` ou `false` para o cliente.
-6.  Envia *assincronamente* um evento da decisão para uma fila **AWS SQS**.
+6.  Envia *assincronamente* um evento da decisao para uma fila **AWS SQS**.
 
 ## 📦 Pré-requisitos (Local)
 
 * [Go](https://go.dev/doc/install) (versão 1.21 ou superior)
 * [Redis](https://redis.io/docs/getting-started/installation/) (rodando localmente ou em Docker)
 * Os serviços `auth-service`, `flag-service` e `targeting-service` devem estar rodando.
-* **Credenciais da AWS:** Para o SQS funcionar, seu terminal deve estar autenticado na AWS (ex: via `aws configure` ou variáveis de ambiente).
+* **Credenciais AWS:** Para o SQS funcionar, use credenciais AWS.
 
 ## 🚀 Rodando Localmente
 
@@ -52,12 +52,9 @@ Ele funciona da seguinte forma:
     # Chave de API que você criou no passo 2
     SERVICE_API_KEY="SUA_CHAVE_DE_SERVICO"
     
-    # --- Configuração da AWS (Obrigatório para o desafio) ---
-    # Cole a URL da fila SQS que você criou no console da AWS
-    AWS_SQS_URL="[https://sqs.us-east-1.amazonaws.com/123456789012/sua-fila](https://sqs.us-east-1.amazonaws.com/123456789012/sua-fila)"
-    
-    # Região da sua fila SQS
-    AWS_REGION="us-east-1" 
+    # --- AWS SQS ---
+    AWS_SQS_URL="<sqs-queue-url>"
+    AWS_REGION="us-east-1"
     ```
 
 4.  **Instale as Dependências:**
@@ -99,5 +96,5 @@ Saída (exemplo): `{"flag_name":"enable-new-dashboard","user_id":"user-abc","res
 
 **3. Verifique o Cache:** Execute o mesmo comando duas vezes seguidas. Na segunda vez, você verá um log "Cache HIT" no terminal do `evaluation-service`.
 
-**4. Verifique a Fila SQS:** Após fazer as chamadas acima, vá até o console da AWS, abra sua fila SQS e verifique se as mensagens (`EvaluationEvent`) estão chegando.
+**4. Verifique a fila:** Apos fazer as chamadas acima, va ate o console da AWS e verifique se as mensagens (`EvaluationEvent`) estao chegando.
 

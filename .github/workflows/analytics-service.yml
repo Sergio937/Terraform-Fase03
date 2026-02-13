@@ -97,22 +97,31 @@ jobs:
           format: 'table'
           severity: CRITICAL
           exit-code: "1"
-      - name: Login to OCI Registry
-        run: |
-          echo "${{ secrets.OCI_AUTH_TOKEN }}" | docker login ${{ secrets.OCI_REGISTRY_URL }} -u "${{ secrets.OCI_USERNAME }}" --password-stdin
-      - name: Push to OCIR
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Push to ECR
         run: |
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          docker tag analytics-service:${COMMIT_SHA} ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:${COMMIT_SHA}
-          docker tag analytics-service:${COMMIT_SHA} ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:latest
-          docker push ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:${COMMIT_SHA}
-          docker push ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:latest
+          ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ECR_REPO=${{ secrets.PROJECT_NAME }}/analytics-service
+          docker tag analytics-service:${COMMIT_SHA} $ECR_REGISTRY/$ECR_REPO:${COMMIT_SHA}
+          docker tag analytics-service:${COMMIT_SHA} $ECR_REGISTRY/$ECR_REPO:latest
+          docker push $ECR_REGISTRY/$ECR_REPO:${COMMIT_SHA}
+          docker push $ECR_REGISTRY/$ECR_REPO:latest
       - name: Update GitOps manifest
         run: |
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ECR_REPO=${{ secrets.PROJECT_NAME }}/analytics-service
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          sed -i "s|image: ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:.*|image: ${{ secrets.OCI_REGISTRY_URL }}/${{ secrets.OCI_NAMESPACE }}/${{ secrets.PROJECT_NAME }}/analytics-service:${COMMIT_SHA}|g" gitops/manifests/analytics-service/deployment.yaml
+          sed -i "s|image:.*|image: $ECR_REGISTRY/$ECR_REPO:${COMMIT_SHA}|g" gitops/manifests/analytics-service/deployment.yaml
           git add gitops/manifests/analytics-service/deployment.yaml
           git commit -m "[GitOps] Update analytics-service image to ${COMMIT_SHA}" || echo "No changes to commit"
           git push origin main

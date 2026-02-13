@@ -15,11 +15,9 @@ spec:
       labels:
         app: evaluation-service
     spec:
-      imagePullSecrets:
-        - name: ocir-secret
       containers:
         - name: evaluation-service
-          image: gru.ocir.io/<namespace>/<project-name>/evaluation-service:latest
+          image: ${ECR_EVALUATION_IMAGE}
           imagePullPolicy: Always
           resources:
             requests:
