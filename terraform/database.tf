@@ -1,47 +1,90 @@
-resource "oci_psql_db_system" "postgres" {
-  count = var.postgres_db_system_count
+resource "aws_security_group" "rds" {
+  name        = "${var.project_name}-${var.environment}-rds"
+  description = "Acesso ao RDS PostgreSQL"
+  vpc_id      = module.vpc.vpc_id
 
-  compartment_id = var.compartment_id
-  db_version     = var.postgres_db_version
-  display_name   = "${var.project_name}-postgres-${count.index + 1}"
-  shape          = var.postgres_shape
-
-  credentials {
-    username = var.postgres_admin_username
-
-    password_details {
-      password_type = "PLAIN_TEXT"
-      password      = var.postgres_admin_password
-    }
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [module.eks.node_security_group_id]
   }
 
-  network_details {
-    subnet_id = oci_core_subnet.oke_db.id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  storage_details {
-    is_regionally_durable = true
-    system_type           = var.postgres_storage_system_type
-  }
-
-  instance_count              = var.postgres_instance_count
-  instance_memory_size_in_gbs = var.postgres_instance_memory_size_in_gbs
-  instance_ocpu_count         = var.postgres_instance_ocpu_count
-
-  freeform_tags = merge(local.common_tags, {
-    Service = "postgresql"
-  })
+  tags = local.common_tags
 }
 
-resource "oci_redis_redis_cluster" "main" {
-  compartment_id     = var.compartment_id
-  display_name       = "${var.project_name}-redis"
-  node_count         = var.redis_node_count
-  node_memory_in_gbs = var.redis_node_memory_in_gbs
-  software_version   = var.redis_software_version
-  subnet_id          = oci_core_subnet.oke_db.id
+resource "aws_db_subnet_group" "postgres" {
+  name       = "${var.project_name}-${var.environment}-rds-subnets"
+  subnet_ids = module.vpc.private_subnets
 
-  freeform_tags = merge(local.common_tags, {
-    Service = "redis"
-  })
+  tags = local.common_tags
+}
+
+resource "aws_db_instance" "postgres" {
+  identifier             = "${var.project_name}-${var.environment}-postgres"
+  engine                 = "postgres"
+  engine_version         = var.rds_engine_version
+  instance_class         = var.rds_instance_class
+  allocated_storage      = var.rds_allocated_storage
+  db_name                = var.rds_db_name
+  username               = var.rds_username
+  password               = var.rds_password
+  db_subnet_group_name   = aws_db_subnet_group.postgres.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  publicly_accessible    = false
+  skip_final_snapshot    = true
+  deletion_protection    = false
+
+  tags = merge(local.common_tags, { Service = "postgresql" })
+}
+
+resource "aws_security_group" "redis" {
+  name        = "${var.project_name}-${var.environment}-redis"
+  description = "Acesso ao ElastiCache Redis"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [module.eks.node_security_group_id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "${var.project_name}-${var.environment}-redis-subnets"
+  subnet_ids = module.vpc.private_subnets
+
+  tags = local.common_tags
+}
+
+resource "aws_elasticache_replication_group" "redis" {
+  replication_group_id       = "${var.project_name}-${var.environment}-redis"
+  description                = "Redis do ToggleMaster"
+  engine                     = "redis"
+  engine_version             = var.redis_engine_version
+  node_type                  = var.redis_node_type
+  num_cache_clusters         = var.redis_num_cache_clusters
+  port                       = 6379
+  subnet_group_name          = aws_elasticache_subnet_group.redis.name
+  security_group_ids         = [aws_security_group.redis.id]
+  automatic_failover_enabled = false
+
+  tags = merge(local.common_tags, { Service = "redis" })
 }

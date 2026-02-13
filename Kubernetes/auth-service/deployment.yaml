@@ -15,11 +15,9 @@ spec:
       labels:
         app: auth-service
     spec:
-      imagePullSecrets:
-        - name: ocir-secret
       containers:
         - name: auth-service
-          image: gru.ocir.io/<namespace>/<project-name>/auth-service:latest
+          image: ${ECR_AUTH_IMAGE}
           imagePullPolicy: Always
           resources:
             requests:

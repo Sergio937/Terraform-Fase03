@@ -185,8 +185,8 @@ Comparação entre estado atual (Git) vs estado no cluster:
 │      spec:                                                               │
 │        containers:                                                       │
 │        - name: analytics-service                                         │
-│  -       image: gru.ocir.io/ns/proj/analytics-service:z9y8x7w           │
-│  +       image: gru.ocir.io/ns/proj/analytics-service:a1b2c3d           │
+│  -       image: <account>.dkr.ecr.<region>.amazonaws.com/proj/analytics-service:z9y8x7w │
+│  +       image: <account>.dkr.ecr.<region>.amazonaws.com/proj/analytics-service:a1b2c3d │
 │          imagePullPolicy: Always                                         │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘

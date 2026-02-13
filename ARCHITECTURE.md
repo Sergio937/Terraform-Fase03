@@ -19,7 +19,7 @@
 │                                                                              │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────────┐   │
 │  │   Build &  │─▶│    Lint    │─▶│  Security  │─▶│  Docker Build &    │   │
-│  │    Test    │  │            │  │   Scans    │  │  Push to OCIR      │   │
+│  │    Test    │  │            │  │   Scans    │  │  Push to ECR       │   │
 │  └────────────┘  └────────────┘  └────────────┘  └─────────┬──────────┘   │
 │                                                              │              │
 │                                                              ▼              │
@@ -55,7 +55,7 @@
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      ARGOCD (Continuous Deployment)                          │
-│                        Running inside OKE Cluster                           │
+│                        Running inside EKS Cluster                           │
 │                                                                              │
 │  ┌────────────────────────────────────────────────────────────────┐         │
 │  │  ArgoCD Controller                                             │         │
@@ -85,7 +85,7 @@
                                         │
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          OKE CLUSTER (OCI)                                   │
+│                          EKS CLUSTER (AWS)                                   │
 │                                                                              │
 │  Namespace: togglemaster                                                    │
 │  ┌────────────────────────────────────────────────────────────────┐         │
@@ -134,10 +134,10 @@
 
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       OCI INFRASTRUCTURE                                     │
+│                       AWS INFRASTRUCTURE                                     │
 │                                                                              │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐               │
-│  │  OCIR (Images) │  │   PostgreSQL   │  │  Redis Cluster │               │
+│  │  ECR (Images)  │  │   PostgreSQL   │  │  Redis Cluster │               │
 │  │  analytics:sha │  │   (3 DBs)      │  │                │               │
 │  │  auth:sha      │  │   - auth       │  │  Evaluation    │               │
 │  │  evaluation:sha│  │   - flag       │  │  cache         │               │
@@ -146,7 +146,7 @@
 │  └────────────────┘                                                         │
 │                                                                              │
 │  ┌────────────────┐  ┌────────────────┐                                    │
-│  │  OCI NoSQL DB  │  │  OCI Queue     │                                    │
+│  │  DynamoDB      │  │  SQS           │                                    │
 │  │                │  │                │                                    │
 │  │  Analytics     │  │  Event Stream  │                                    │
 │  │  data store    │  │  for events    │                                    │
@@ -168,7 +168,7 @@
    ├─ Security Scan (SAST + SCA)
    ├─ Docker Build
    ├─ Container Scan (Trivy)
-   ├─ Push to OCIR
+   ├─ Push to ECR
    └─ Update GitOps manifest (new image tag)
    ↓
 4. Commit pushed to gitops/manifests/
@@ -181,7 +181,7 @@
    ↓
 8. ArgoCD syncs (applies kubectl)
    ↓
-9. Kubernetes pulls new image from OCIR
+9. Kubernetes pulls new image from ECR
    ↓
 10. Rolling update deployed
    ↓
@@ -200,7 +200,7 @@
        ▼
 ┌──────────────┐
 │ GitHub       │ ────── Build, Test, Security
-│ Actions (CI) │ ────── Push image to OCIR
+│ Actions (CI) │ ────── Push image to ECR
 └──────┬───────┘ ────── Update GitOps repo
        │
        │ commit new image tag
@@ -220,7 +220,7 @@
        │ deploy
        ▼
 ┌──────────────┐
-│  OKE Cluster │ ────── Pull from OCIR
+│  EKS Cluster │ ────── Pull from ECR
 │              │ ────── Connect to DBs
 └──────────────┘
 ```

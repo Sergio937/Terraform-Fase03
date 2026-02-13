@@ -55,11 +55,11 @@ Cada workflow GitHub Actions foi atualizado com novo step:
 
 **Workflow completo:**
 ```
-Build → Test → Lint → Security → Docker Build → OCIR Push → GitOps Update
+Build → Test → Lint → Security → Docker Build → ECR Push → GitOps Update
                                                                     ↓
                                                           ArgoCD Auto-Sync
                                                                     ↓
-                                                              OKE Cluster
+                                                              EKS Cluster
 ```
 
 ### 4. Scripts de Automação
@@ -74,11 +74,11 @@ Build → Test → Lint → Security → Docker Build → OCIR Push → GitOps U
 - Atualiza URLs do repositório nas Applications
 - Facilita setup inicial
 
-**Kubernetes/configure-ocir.sh** (já existente)
-- Atualiza URLs OCIR nos deployments
+**Kubernetes/configure-ecr.sh**
+- Atualiza URLs ECR nos deployments
 
-**Kubernetes/create-ocir-secret.sh** (já existente)
-- Cria image pull secret
+**Kubernetes/create-ecr-secret.sh**
+- Cria image pull secret (opcional)
 
 ### 5. Makefile Atualizado
 
@@ -139,9 +139,9 @@ git push origin feature/nova-feature
 
 # GitHub Actions:
 # 1. Builda imagem: analytics-service:a1b2c3d
-# 2. Push para OCIR
+# 2. Push para ECR
 # 3. Atualiza gitops/manifests/analytics-service/deployment.yaml
-#    image: gru.ocir.io/ns/proj/analytics-service:a1b2c3d
+#    image: <account>.dkr.ecr.<region>.amazonaws.com/proj/analytics-service:a1b2c3d
 # 4. Commit: "[GitOps] Update analytics-service image to a1b2c3d"
 # 5. Push para main
 
